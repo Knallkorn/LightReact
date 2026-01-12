@@ -4,23 +4,26 @@ import numpy
 
 numLeds = 140
 numRGB = numLeds * 3
-dataLen = numRGB if numRGB % 64 == 0 else numRGB + (64-(numRGB%64))
+
+startMarker = 0x0F
+endMarker = 0xF0
 
 link = serial.Serial(port='COM6', baudrate=115200, timeout=1)
 time.sleep(2)
 
-leds = numpy.full(shape=(numLeds), fill_value=255, dtype=numpy.uint8)
+leds = numpy.full(shape=(numLeds, 3), fill_value=255, dtype=numpy.uint8)
 leds = leds.flatten()
-split = list()
-for i in range(numLeds // 64):
-    split.append(64+(64*(i)))
-leds = numpy.split(leds, split)
 
-for packArr in leds:
-    packData = packArr.tobytes()
-    print(f"Sent: {packData}")
-    link.write(packData)
-    time.sleep(0.1)
-    recData = link.read_all()
-    print(f"Recieved: {recData}")
-    print(f"Matching: {recData == packData}")
+data = leds
+data = numpy.insert(data, 0, startMarker)
+data = numpy.append(data, endMarker)
+data = data.astype(dtype=numpy.uint8)
+
+packet = data.tobytes()
+print(f"Sent: {packet}\n")
+link.write(packet)
+time.sleep(0.05)
+recData = link.read_all()
+print(f"Recieved: {recData}")
+print(f"Size: {len(leds.tolist())}")
+print(f"Matching: {recData == leds.tobytes()}")

@@ -6,8 +6,12 @@
 #define SIGNAL_PIN 8
 #define DELAY 2
 
+#define START_MARKER 0x0F // 00001111
+#define END_MARKER 0xF0 // 11110000
+
 const size_t dataLength = NUM_RGB;
 uint8_t data[dataLength];
+bool newData = false;
 
 int time;
 
@@ -33,11 +37,8 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    byte packData[64];
-    int packLen = Serial.readBytes(packData, Serial.available());
-    Serial.write(packData, packLen);
-  }
+  rcxData();
+  echoData();
 
   /*
   for (int i=0; i<NUM_LEDS; i++) {
@@ -53,3 +54,35 @@ void loop() {
   */
 }
 
+void rcxData() {
+  static bool rcxCur = false;
+  static uint16_t ndx = 0;
+  uint8_t rcx;
+
+  while (Serial.available() > 0 && newData == false) {
+    rcx = Serial.read();
+
+    if (rcxCur == true) {
+      if (rcx != END_MARKER) {
+        data[ndx] = rcx;
+        ndx++;
+        if (ndx >= dataLength) {
+          ndx = dataLength - 1;
+        }
+      } else {
+        rcxCur = false;
+        ndx = 0;
+        newData = true;
+      }
+    } else if (rcx == START_MARKER) {
+      rcxCur = true;
+    }
+  }
+}
+
+void echoData() {
+  if (newData == true) {
+    Serial.write(data, dataLength);
+    newData = false;
+  }
+}
