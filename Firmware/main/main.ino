@@ -4,7 +4,6 @@
 #define NUM_RGB NUM_LEDS*3
 #define LED_PIN 4
 #define SIGNAL_PIN 8
-#define DELAY 2
 
 #define START_MARKER 0x0F // 00001111
 #define END_MARKER 0xF0 // 11110000
@@ -13,45 +12,28 @@ const size_t dataLength = NUM_RGB;
 uint8_t data[dataLength];
 bool newData = false;
 
-int time;
-
 CRGB leds [NUM_LEDS];
 
 void setup() {
   Serial.begin(115200);
   Serial.setTimeout(1);
-  
-  /*
-  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds,NUM_LEDS);
-  FastLED.clear();
-  FastLED.setBrightness(50);
-  time = 0;
-  for (int i=0; i<NUM_LEDS; i++) {
-    leds[i].setHSV(0, 255, 255);
-  }
-  FastLED.show();
 
   pinMode(SIGNAL_PIN, OUTPUT);
   digitalWrite(SIGNAL_PIN, HIGH);
-  */
+  delay(100);
+  
+  FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds,NUM_LEDS);
+  FastLED.clear();
+  FastLED.setBrightness(50);
+  for (int i=0; i<NUM_LEDS; i++) {
+    leds[i].setHSV(0, 255, 0);
+  }
+  FastLED.show();
 }
 
 void loop() {
   rcxData();
-  echoData();
-
-  /*
-  for (int i=0; i<NUM_LEDS; i++) {
-    leds[i].setHue((i + time > 255 ? time+i-255 : time + i));
-  }
-  FastLED.show();
-  if (time++ > 255) {
-    time = 0;
-  }
-
-  Serial.println();
-  delay(DELAY);
-  */
+  echoData(); 
 }
 
 void rcxData() {
@@ -82,7 +64,11 @@ void rcxData() {
 
 void echoData() {
   if (newData == true) {
-    Serial.write(data, dataLength);
+    //Serial.write(data, dataLength);
+    for (int i=0; i<NUM_LEDS; i++) {
+      leds[i].setRGB(data[(i*3)],data[(i*3)+1],data[(i*3)+2]);
+    }
+    FastLED.show();
     newData = false;
   }
 }
