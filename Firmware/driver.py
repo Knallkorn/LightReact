@@ -32,8 +32,7 @@ while True:
     # Package data
     data = denormalise(hsv_to_rgb(colors).flatten()).astype(numpy.uint8)
     data = numpy.insert(data, 0, startMarker)
-    data = numpy.append(data, endMarker)
-    data = data.astype(dtype=numpy.uint8)
+    data = numpy.insert(data, 1, (numLeds if hue < 200 else 0)) # Number of LEDs (sending number of RGB values would be too large)
 
     # Send data
     packet = data.tobytes()

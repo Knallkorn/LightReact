@@ -28,7 +28,7 @@ void setup() {
   
   // Initialise LEDs
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(leds,NUM_LEDS);
-  FastLED.clear();
+  FastLED.clear(true);
   FastLED.setBrightness(50); // Currently only static brightness at 50
 }
 
@@ -39,26 +39,36 @@ void loop() {
 
 void rcxData() {
   static bool rcxCur = false; // Whether currently recieving
+  static bool nextPayload = false; // Whether next byte should be payload
   static uint16_t ndx = 0; // Data index iterator
+  static uint16_t payloadLength = 0; // Length of payload
   uint8_t rcx; // Buffer to hold serial input
+  
 
   while (Serial.available() > 0 && newData == false) {
     rcx = Serial.read(); // Assuming that processing speed is considerably higher than baud, so only one byte to process at a time
-
+    
     if (rcxCur == true) {
-      if (rcx != END_MARKER) { // Payload handling
+      if (ndx < payloadLength) { // Payload handling
         data[ndx] = rcx;
         ndx++;
-        if (ndx >= dataLength) {
-          ndx = dataLength - 1;
-        }
       } else { // End of packet
         rcxCur = false;
         ndx = 0;
+        payloadLength = 0;
         newData = true;
       }
+    } else if (nextPayload == true) {
+      if (rcx == 0) {
+        digitalWrite(SIGNAL_PIN, LOW);
+      } else {
+        digitalWrite(SIGNAL_PIN, HIGH);
+        payloadLength = ((uint16_t)rcx)*3;
+        rcxCur = true;
+      }
+      nextPayload = false;
     } else if (rcx == START_MARKER) { // Begin packet
-      rcxCur = true;
+      nextPayload = true;
     }
   }
 }
