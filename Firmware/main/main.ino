@@ -14,6 +14,7 @@ uint8_t data[dataLength];
 bool newData = false;
 
 CRGB leds [NUM_LEDS];
+uint8_t brightness = 50;
 
 void setup() {
   // Initialise serial
@@ -38,7 +39,7 @@ void loop() {
 
 void rcxData() {
   static bool rcxCur = false; // Whether currently recieving
-  static bool nextPayload = false; // Whether next byte should be payload
+  static uint8_t metaData = 0; // Whether next byte should be payload
   static uint16_t ndx = 0; // Data index iterator
   static uint16_t payloadLength = 0; // Length of payload
   uint8_t rcx; // Buffer to hold serial input
@@ -57,17 +58,20 @@ void rcxData() {
         payloadLength = 0;
         newData = true;
       }
-    } else if (nextPayload == true) {
+    } else if (metaData == 1) {
       if (rcx == 0) {
         digitalWrite(SIGNAL_PIN, LOW);
       } else {
         digitalWrite(SIGNAL_PIN, HIGH);
         payloadLength = ((uint16_t)rcx)*3;
-        rcxCur = true;
       }
-      nextPayload = false;
+      metaData = 2;
+    } else if (metaData == 2) {
+        brightness = rcx;
+        rcxCur = true;
+        metaData = 0;
     } else if (rcx == START_MARKER) { // Begin packet
-      nextPayload = true;
+      metaData = 1;
     }
   }
 }
@@ -77,6 +81,7 @@ void echoData() {
     for (int i=0; i<NUM_LEDS; i++) {
       leds[i].setRGB(data[(i*3)],data[(i*3)+1],data[(i*3)+2]);
     }
+    FastLED.setBrightness(brightness);
     FastLED.show();
     newData = false;
   }
