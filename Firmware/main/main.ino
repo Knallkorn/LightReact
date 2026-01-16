@@ -6,8 +6,7 @@
 #define LED_PIN 4
 #define SIGNAL_PIN 8
 
-#define START_MARKER 0x0F // 00001111
-#define END_MARKER 0xF0 // 11110000
+#define START_MARKER 0x1 // 00000001
 
 // Initalise global variables
 const size_t dataLength = NUM_RGB;
