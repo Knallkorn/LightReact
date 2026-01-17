@@ -1,12 +1,20 @@
-from PySide6 import QtCore, QtWidgets, QtGui
+from PySide6 import QtCore, QtWidgets
+from driver import Driver
+from time import sleep
 
 class MainWindow(QtWidgets.QWidget):
+
+    stopDriver = QtCore.Signal()
+
     def __init__(self):
         super().__init__()
 
         self.numLeds = 140
 
         self.layout = QtWidgets.QVBoxLayout(self)
+
+        self.runButton = QtWidgets.QPushButton("Run")
+        self.runButton.clicked.connect(self.runDriver)
 
         self.colorButton = QtWidgets.QPushButton("Color Picker")
         self.colorButton.clicked.connect(self.openPicker)
@@ -26,9 +34,24 @@ class MainWindow(QtWidgets.QWidget):
         self.numLedsLayout.addWidget(self.numLedsText)
         self.numLedsLayout.addWidget(self.ledUpButton)
 
+        self.layout.addWidget(self.runButton)
         self.layout.addWidget(self.colorButton)
         self.layout.addWidget(self.colorText)
         self.layout.addLayout(self.numLedsLayout)
+
+    @QtCore.Slot()
+    def runDriver(self):
+        try:
+            print(self.driver)
+        except:
+            pass
+        else:
+            self.driver.requestInterruption()
+            sleep(5)
+        self.driver = Driver()
+        self.driver.started.connect(self.driver.run)
+        self.driver.finished.connect(self.driver.deleteLater)
+        self.driver.start()
 
     @QtCore.Slot()
     def openPicker(self):
