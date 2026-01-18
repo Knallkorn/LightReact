@@ -114,7 +114,7 @@ class Driver(QThread):
 
             # Update brightness
             if self.reactiveBrightness == True:
-                brightness = self.getBrightness(colors)*self.brightnessMod/100
+                brightness = round(self.getBrightness(colors)*self.brightnessMod/100)
             else:
                 brightness = self.brightnessMod
 
@@ -123,7 +123,7 @@ class Driver(QThread):
             data[data == 1] = 0 # Ensure no bytes match marker (Causes issues)
             data = numpy.insert(data, 0, self.startMarker)
             data = numpy.insert(data, 1, self.numLeds) # Number of LEDs (sending number of RGB values would be too large)
-            data = numpy.insert(data, 2, brightness)
+            data = numpy.insert(data, 2, (brightness if brightness != 1 else 2))
 
             # Send data
             packet = data.tobytes()

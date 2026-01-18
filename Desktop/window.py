@@ -8,9 +8,9 @@ class MainWindow(QtWidgets.QWidget):
         super().__init__()
 
         self.numLeds = 140
-        self.mode = Driver.LEDMode.REACTIVE
-        self.doLerp = True
-        self.doBrightness = True
+        self.mode = Driver.LEDMode.RAINBOW
+        self.doLerp = False
+        self.doBrightness = False
         self.brightnessMod = 100
 
         self.layout = QtWidgets.QVBoxLayout(self)
@@ -30,6 +30,7 @@ class MainWindow(QtWidgets.QWidget):
         self.modeText.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self.modeDropdown = QtWidgets.QComboBox()
         self.modeDropdown.addItems(['Reactive', 'Red', 'Green', 'Blue', 'Rainbow'])
+        self.modeDropdown.setCurrentIndex(Driver.LEDMode.RAINBOW.value)
         self.modeDropdown.currentIndexChanged.connect(self.updateMode)
 
         self.modeLayout = QtWidgets.QHBoxLayout()
@@ -107,6 +108,7 @@ class MainWindow(QtWidgets.QWidget):
             pass
         else:
             self.driver.requestInterruption()
+            sleep(0.03)
     
     @QtCore.Slot()
     def updateMode(self):
