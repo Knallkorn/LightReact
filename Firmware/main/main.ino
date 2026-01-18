@@ -60,6 +60,8 @@ void rcxData() {
       }
     } else if (metaData == 1) {
       if (rcx == 0) {
+        FastLED.clear(true);
+        delay(100);
         digitalWrite(SIGNAL_PIN, LOW);
       } else {
         digitalWrite(SIGNAL_PIN, HIGH);

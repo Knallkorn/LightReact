@@ -13,16 +13,16 @@ class Driver(QThread):
     finished = Signal()
 
     class LEDMode(Enum):
-        REACTIVE = 1
-        RED = 2
-        GREEN = 3
-        BLUE = 4
-        RAINBOW = 5
+        REACTIVE = 0
+        RED = 1
+        GREEN = 2
+        BLUE = 3
+        RAINBOW = 4
 
     # INITIALISE GLOBAL VARIABLES
     def __init__(self, mode: LEDMode=LEDMode.RAINBOW, numLeds: int=140, 
                  doLerp: int=False, lerpAlpha: float=0.2, 
-                 reactiveBrightness: bool=False, brightnessStatic: int=50, brightnessMod: float=1.):
+                 reactiveBrightness: bool=False, brightnessMod: int=50):
         
         super().__init__(None)
 
@@ -35,7 +35,6 @@ class Driver(QThread):
         self.lerpAlpha = lerpAlpha
 
         self.reactiveBrightness = reactiveBrightness
-        self.brightnessStatic = brightnessStatic
         self.brightnessMod = brightnessMod
 
         if self.mode == self.LEDMode.REACTIVE:
@@ -52,7 +51,7 @@ class Driver(QThread):
     denormalise = numpy.vectorize((lambda x: int(x*255)))
 
     # Returns a numpy uint8 array of shape (width, 3) that contains the vertical average colour of the screen at each point
-    def sampleScreen(width: int):
+    def sampleScreen(self, width: int):
         img = ImageGrab.grab()
         img = img.resize((width,round(img.size[1]/5)), resample=Image.Resampling.BOX)
         size = img.size
@@ -60,14 +59,14 @@ class Driver(QThread):
         return numpy.floor(imgArr.mean(axis=0)).astype(numpy.uint8)
 
     # Lerps between 2 RGB tuples of format (R, G, B) at rate a and returns the interpolated colour
-    def lerpColor(color1: tuple, color2: tuple, a: float):
+    def lerpColor(self, color1: tuple, color2: tuple, a: float):
         if not (0 <= a <= 1):
             a = max(0, min(1, a))
         lerped = [int(c1*(1 - a) + c2*a) for c1, c2 in zip(color1, color2)]
         return tuple(lerped)
 
     # Gets the average percieved brightness of a numpy array of RGB values of shape (..., 3)
-    def getBrightness(colors):
+    def getBrightness(self, colors):
         avg = colors.mean(axis=0)
         # Percieved brightness magic numbers from https://alienryderflex.com/hsp.html
         return sqrt(0.299*(avg[0]**2) + 0.587*(avg[1]**2) + 0.114*(avg[2]**2))
@@ -83,6 +82,8 @@ class Driver(QThread):
         return cols
     
     def finish(self):
+        self.link.write(numpy.array([0x1, 0x0], dtype=numpy.uint8).tobytes())
+        sleep(0.01)
         self.link.close()
         self.finished.emit()
     
@@ -113,9 +114,9 @@ class Driver(QThread):
 
             # Update brightness
             if self.reactiveBrightness == True:
-                brightness = self.getBrightness(colors)*self.brightnessMod
+                brightness = self.getBrightness(colors)*self.brightnessMod/100
             else:
-                brightness = self.brightnessStatic
+                brightness = self.brightnessMod
 
             # Package data
             data = colors
